@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+migrations - Copy/
+static/
+.env
+db.sqlite3
+db copy.sqlite3
+start_project.ps1
+write_requirements.ps1
+render.yaml

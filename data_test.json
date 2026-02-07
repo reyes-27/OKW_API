@@ -1,0 +1,25 @@
+
+{
+    "user": {
+        "id": "17099b14-16b0-4a40-a4fa-2992b4265633",
+        "full_name": "Daniel Reyes",
+        "reputation": 0,
+        "is_seller": true
+    },
+    "category": [
+        {
+            "id": 1,
+            "name": "Tech",
+            "desc": "waos",
+            "parent": null
+        }
+    ],
+    "header": "Testing post method",
+    "description": "<p>WAos</p>",
+    "image_set": [
+        {
+            "image":"",
+            "level": 0
+        }
+    ]
+}
