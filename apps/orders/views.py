@@ -26,14 +26,14 @@ class CartDetailAPIView(APIView):
         """
         Retrieve the current user's cart.
         """
-        cart = Cart.objects.filter(customer_id=request.user.customer.id).prefetch_related(
+        cart = Cart.objects.prefetch_related(
             'items__product',
-            Prefetch(
-                "items__product__image_set",
-                queryset=ProductImage.objects.filter(level=0),
-                to_attr='primary_images'
-            )
-            )
+                Prefetch(
+                    "items__product__image_set",
+                    queryset=ProductImage.objects.filter(level=0),
+                    to_attr='primary_images'
+                )
+            ).get(customer_id=request.user.customer.id)
         serializer = CartSerializer(cart, context={'request':request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 

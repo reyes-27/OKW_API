@@ -13,12 +13,12 @@ from apps.accounts.serializers import CustomerSerializer
 class CartItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
     unit_price = serializers.ReadOnlyField(source='product.final_price')
-    # Use the @property we created in the model
     subtotal = serializers.DecimalField(max_digits=10, decimal_places=2, source='item_total', read_only=True)
     image = serializers.SerializerMethodField()
     stock = serializers.SerializerMethodField()
     def get_image(self, obj):
-        image_obj = obj.product.image_set.filter(level=0).first()
+        images = getattr(obj.product, 'primary_images', [])
+        image_obj = images[0] if images else None
         if image_obj and image_obj.image:
             request = self.context.get('request')
             if request is not None:
@@ -37,18 +37,15 @@ class CartItemSerializer(serializers.ModelSerializer):
 
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True, read_only=True)
-    # Use the @property from the Cart model
     total_price = serializers.DecimalField(max_digits=10, decimal_places=2, source='cart_total', read_only=True)
 
     class Meta:
         model = Cart
         fields = ['id', 'items', 'total_price', 'created_at']
 
-# class ShortCartSerializer()
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
-    # Use the property for total (quantity * price_at_purchase)
     total = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
