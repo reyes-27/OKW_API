@@ -11,11 +11,13 @@ from apps.accounts.serializers import CustomerSerializer
 
 
 class CartItemSerializer(serializers.ModelSerializer):
-    product_name = serializers.ReadOnlyField(source='product.name')
-    unit_price = serializers.ReadOnlyField(source='product.final_price')
+    product__name = serializers.ReadOnlyField(source='product.name')
+    product__unit_price = serializers.ReadOnlyField(source='product.final_price')
+    product__stock = serializers.ReadOnlyField(source='product.stock')
+    product__slug = serializers.ReadOnlyField(source='product.slug')
     subtotal = serializers.DecimalField(max_digits=10, decimal_places=2, source='item_total', read_only=True)
     image = serializers.SerializerMethodField()
-    stock = serializers.SerializerMethodField()
+
     def get_image(self, obj):
         images = getattr(obj.product, 'primary_images', [])
         image_obj = images[0] if images else None
@@ -25,15 +27,21 @@ class CartItemSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(image_obj.image.url)
             return image_obj.image.url
         return None
-    def get_stock(self, obj):
-        return obj.product.stock
+
         
     class Meta:
             model = CartItem
-            fields = ['id', 'product', 'product_name', 'quantity', 'unit_price', 'subtotal', 'image', 'stock']
+            fields = [
+                'id', 
+                'product__name',
+                'product__stock',
+                'product__slug', 
+                'product__unit_price', 
+                'quantity', 
+                'subtotal', 
+                'image', 
+                ]
             
-
-    
 
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True, read_only=True)
@@ -42,7 +50,6 @@ class CartSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cart
         fields = ['id', 'items', 'total_price', 'created_at']
-
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
