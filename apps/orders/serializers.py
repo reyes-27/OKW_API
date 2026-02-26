@@ -16,23 +16,23 @@ class CartItemSerializer(serializers.ModelSerializer):
     # Use the @property we created in the model
     subtotal = serializers.DecimalField(max_digits=10, decimal_places=2, source='item_total', read_only=True)
     image = serializers.SerializerMethodField()
-
-    class Meta:
-            model = CartItem
-            fields = ['id', 'product', 'product_name', 'quantity', 'unit_price', 'subtotal', 'image']
-            
+    stock = serializers.SerializerMethodField()
     def get_image(self, obj):
-        # Get the first image with level 0
         image_obj = obj.product.image_set.filter(level=0).first()
-        
         if image_obj and image_obj.image:
             request = self.context.get('request')
-            # Safety check: if request exists, build absolute URL; 
-            # otherwise, return the relative path (/media/...)
             if request is not None:
                 return request.build_absolute_uri(image_obj.image.url)
             return image_obj.image.url
         return None
+    def get_stock(self, obj):
+        return obj.product.stock
+        
+    class Meta:
+            model = CartItem
+            fields = ['id', 'product', 'product_name', 'quantity', 'unit_price', 'subtotal', 'image', 'stock']
+            
+
     
 
 class CartSerializer(serializers.ModelSerializer):

@@ -12,6 +12,9 @@ from .models import (
 from rest_framework import status
 from rest_framework.response import Response
 from django.db import transaction
+from django.db.models import Prefetch
+
+from ..items.models import ProductImage
 
 from .utils import process_checkout, add_increment_item_to_cart, remove_or_decrement_item, change_quantity
 
@@ -23,11 +26,15 @@ class CartDetailAPIView(APIView):
         """
         Retrieve the current user's cart.
         """
-        # Ensure the user has a cart. 
-        # Using get_or_create prevents 404s for new users.
-        print(request.user)
-        cart, created = Cart.objects.get_or_create(customer_id=request.user.customer.id)
-        serializer = CartSerializer(cart)
+        cart = Cart.objects.filter(customer_id=request.user.customer.id).prefetch_related(
+            'items__product',
+            Prefetch(
+                "items__product__image_set",
+                queryset=ProductImage.objects.filter(level=0),
+                to_attr='primary_images'
+            )
+            )
+        serializer = CartSerializer(cart, context={'request':request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request):
@@ -43,9 +50,9 @@ class CartDetailAPIView(APIView):
 class CartItemManagerView(APIView):
     def post(self, request, *args, **kwargs):
         cart = Cart.objects.get(customer_id=request.user.customer.id)
-        product_id = request.data['product_id']
         quantity = request.data.get('quantity', 1)
-        message = add_increment_item_to_cart(cart=cart, product_id=product_id, quantity=quantity)
+        product_slug = request.data['product_slug']
+        message = add_increment_item_to_cart(cart=cart, product_slug=product_slug, quantity=quantity)
         if message[0] == 201:
             return Response({"message":message[1]}, status=status.HTTP_201_CREATED)
         else:

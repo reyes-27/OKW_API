@@ -1,5 +1,6 @@
 from .models import Order, OrderItem, Payment, CartItem
 from django.db import transaction
+from ..items.models import Product
 def process_checkout(cart, payment_method):
     """
     This function will take 2 arguments, current user's cart(Cart to be converted to order)
@@ -41,9 +42,10 @@ def process_checkout(cart, payment_method):
         items.delete()
         return order
     
-def add_increment_item_to_cart(cart, product_id, quantity):
+def add_increment_item_to_cart(cart, product_slug, quantity):
+    product = Product.objects.get(slug=product_slug)
     item, created = CartItem.objects.get_or_create(
-        product_id=product_id, 
+        product=product, 
         cart=cart, 
         defaults={'quantity': quantity}
     )
