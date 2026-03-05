@@ -48,6 +48,7 @@ class CartDetailAPIView(APIView):
         return Response({"error": "Cart not found"}, status=status.HTTP_404_NOT_FOUND)
     
 class CartItemManagerView(APIView):
+
     def post(self, request, *args, **kwargs):
         cart = Cart.objects.get(customer_id=request.user.customer.id)
         quantity = request.data.get('quantity', 1)
@@ -70,12 +71,10 @@ class CartItemManagerView(APIView):
         except ValueError as e:
             return Response({"error": str(e)}, status=404)
 
-    def delete(self, request, product_id):
+    def delete(self, request, slug):
         cart = request.user.customer.cart
-        # product_id = request.data.get('product_id')
-        
         try:
-            msg = remove_or_decrement_item(cart, product_id, force_delete=True)
+            msg = remove_or_decrement_item(cart, slug, force_delete=True)
             return Response({"message": msg})
         except ValueError as e:
             return Response({"error": str(e)}, status=404)

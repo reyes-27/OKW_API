@@ -58,10 +58,13 @@ def add_increment_item_to_cart(cart, product_slug, quantity):
         message = [400, f'error: {e}']
     return message
 
-def remove_or_decrement_item(cart, product_id, force_delete=False):
+def remove_or_decrement_item(cart, product_slug, force_delete=False):
+    print(product_slug)
+
+    product = Product.objects.get(slug=product_slug)
+
     try:
-        item = CartItem.objects.get(product_id=product_id, cart=cart)
-        
+        item = CartItem.objects.get(product=product, cart=cart)
         if force_delete or item.quantity <= 1:
             item.delete()
             return "Item removed from cart"

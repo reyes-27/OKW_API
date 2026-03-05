@@ -14,38 +14,41 @@ from .serializers import (
 from .permissions import IsSellerOrReadOnly
 from django.http import Http404
 from .paginators import LargeResultsSetPagination
-# Create your views here.
+from django.db.models import Q
 
 class ProductListAPIView(APIView):
-    permission_classes = [AllowAny, ]
+    permission_classes = [AllowAny]
+
     def get(self, request, format=None):
-        # print(request.user.customer.id)
-        cat = request.query_params.get("cat")
-        if not cat:
-            products = Product.objects.select_related("seller").filter(visibility="pu")
-        else:
-            category = Category.objects.prefetch_related("children").get(name=cat)
-            if category.children.all().exists():
-                sub_categories = category.children.all()
-                categories = [category, *[sub_cat for sub_cat in sub_categories]]
-                categories=tuple(categories)
-                products = Product.objects.select_related("seller").filter(categories__in=categories, visibility="pu")
-            else:
-                products = Product.objects.select_related("seller").filter(categories=category, visibility="pu")
-        if len(products) > 1:
+        q = request.query_params.get('q', '').strip()
+        cat_name = request.query_params.get("cat")
+        
+        products = Product.objects.select_related("seller").filter(visibility="pu")
+
+        if cat_name:
+            try:
+                category = Category.objects.get(name=cat_name)
+                category_ids = category.children.values_list('id', flat=True)
+                products = products.filter(
+                    Q(categories=category) | Q(categories__id__in=category_ids)
+                )
+            except Category.DoesNotExist:
+                return Response({'data': 'Category not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if q:
+            products = products.filter(
+                Q(name__icontains=q) |
+                Q(description__icontains=q) |
+                Q(categories__name__icontains=q)
+            ).distinct()
+
+        if products.exists(): # .exists() is faster than len()
             paginator = LargeResultsSetPagination()
             paginated_q = paginator.paginate_queryset(products, request)
             serializer = ShortProductSerializer(paginated_q, many=True, read_only=True, context={"request":request})
             return paginator.get_paginated_response(data={'data': serializer.data}, status=status.HTTP_200_OK)
-        else:
-            return Response({'data': 'There are no products'}, status=status.HTTP_204_NO_CONTENT)
-    def post(self, request, format=None):
-        serializer = ShortProductSerializer(data=request.data, context={"request":request})
-        if serializer.is_valid():
-            serializer.save(seller=request.user.customer)
-            return Response(data=serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response({'data': 'There are no products'}, status=status.HTTP_204_NO_CONTENT)
 
 
 class ProductDetailAPIView(APIView):

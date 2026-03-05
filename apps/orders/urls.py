@@ -12,7 +12,7 @@ urlpatterns = [
     
     # Items inside the cart
     path('cart/items/', CartItemManagerView.as_view(), name='cart-items'),
-    path('cart/items/<uuid:product_id>/', CartItemManagerView.as_view(), name='cart-items'),
+    path('cart/items/<slug:slug>/', CartItemManagerView.as_view(), name='cart-items'),
 
     
     # Process the cart
