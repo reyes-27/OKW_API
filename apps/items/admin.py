@@ -26,7 +26,7 @@ class ProductAdmin(admin.ModelAdmin):
         ),}
          ),
     )
-    readonly_fields = ('final_price', 'rate',)
+    readonly_fields = ('rate',)
 
 class ProductImageAdmin(admin.ModelAdmin):
     readonly_fields = ('level',)
